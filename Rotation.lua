@@ -43,6 +43,8 @@ local function DEF()
             return true
         end
     end
+
+   -- Out of Combat healing
     if Setting("OOC Healing") and not Player.Combat and not Player.Moving and HP <= Setting("OOC Healing Percent HP") and Player.PowerPct > Setting("OOC Healing Percent Mana") 
     then if Spell.HealingWave:Cast(Player) then return true end end
 end
@@ -50,16 +52,15 @@ end
 
 function Shaman.Rotation()
    Locals()
-   if OOC() then return true end
    if DEF() then return true end
     
     -- Auto Target Quest Units
-    if Setting("Auto Target Quest Units") and Player:AutoTargetQuest(20, true) then return true end
+    if Setting("Auto Target Quest Units") then if Player:AutoTargetQuest(20, true) then return true end end
     -- Auto Target
-    if Player.Combat and Setting("Auto Target") and Player:AutoTarget(20, true) then return true end 
+    if Player.Combat and Setting("Auto Target") then if Player:AutoTarget(20, true) then return true end end
 
     -- Rockbiter
-    if Setting("Rockbiter Weapon") and Spell.RockbiterWeapon:Known() and not hasMainHandEnchant and Spell.RockbiterWeapon:Cast(Player) then return true end 
+    if Setting("Rockbiter Weapon") then if not hasMainHandEnchant and Spell.RockbiterWeapon:Cast(Player) then return true end end
     
     -- Lightning Shield
     if Setting("Lightning Shield") and Spell.LightningShield:Known() then
@@ -71,28 +72,29 @@ function Shaman.Rotation()
     ----------------------------------------------------
     -- Enhance DPS Rotation ----------------------------
     ----------------------------------------------------
-    if Target and Target.ValidEnemy
-    then
-        -- EarthShock
-       if Setting("Earth Shock") and Target.Distance <= 20 and Player.PowerPct > Setting("Earth Shock Mana") and Target.TTD > 1 then
-           if Spell.EarthShock:Cast(Target) then return true end 
-       end
+       -- Stormstrike
+       if Setting("Stormstrike") and Target then if Spell.Stormstrike:Cast(Target) then return true end end
+
+       -- EarthShock
+       if Setting("Earth Shock") and Target and Target.Distance <= 20 and Player.PowerPct > Setting("Earth Shock Mana") and Target.TTD > 1 
+       then if Spell.EarthShock:Cast(Target) then return true end end
 
        --Flame Shock
-       if Setting("Flame Shock") and Target.Distance <= 20 and Player.PowerPct > Setting("Flame Shock Mana") and Target.TTD > 8  and not Debuff.FlameShock:Exist(Target) and Target.CreatureType ~= "Totem" and Target.CreatureType ~= "Elemental" then
+       if Setting("Flame Shock") and Target and Target.Distance <= 20 and Player.PowerPct > Setting("Flame Shock Mana") and Target.TTD > 8  
+       and not Debuff.FlameShock:Exist(Target) and Target.CreatureType ~= "Totem" and Target.CreatureType ~= "Elemental" then
            if Spell.FlameShock:Cast(Target) then return true end
        end
 
-       -- Stormstrike
-       if Setting("Stormstrike") and Spell.Stormstrike:Cast(Target) then return true end 
-
        -- Autoattack
-       if Setting("Auto Attack") and Target.Distance <= 5 then StartAttack() end
-       
-       --Lightning Bolt
-       if Setting("Lightning Bolt") and not Player.Combat and Target.Facing and Target.Distance >= 20 and not Player.Moving  and not Spell.LightningBolt:LastCast() then
+       if Setting("Auto Attack") then if Target and Target.ValidEnemy and Target.Distance < 5 then StartAttack() end end
+
+       --Lightning Bolt In Combat (Leveling)
+       if Setting("Lightning Bolt In Combat") and Target and Target.Facing and not Player.Moving and Player.PowerPct > Setting("Lightning Bolt Mana Percent") and Target.TTD > 2 then 
           if Spell.LightningBolt:Cast(Target, 1) then return true end
-       end
-    end
-      
+       end 
+
+       --Lightning Bolt (opener)
+       if Setting("Lightning Bolt") and not Player.Combat and Target and Target.Facing and Target.Distance >= 20 and not Player.Moving and not Spell.LightningBolt:LastCast() then 
+        if Spell.LightningBolt:Cast(Target, 1) then return true end
+       end 
 end

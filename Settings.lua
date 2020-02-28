@@ -21,6 +21,8 @@ function Shaman.Settings()
     UI.AddToggle("Lightning Bolt","Rank 1 to pull", nil, true)
     
        UI.AddHeader("DPS") 
+    UI.AddToggle("Lightning Bolt In Combat","Use Lightning Bolt until you reach the set Mana Percent (low levels leveling)", nil, false)
+    UI.AddRange("Lightning Bolt Mana Percent", nil, 0, 100, 1, 65)
     UI.AddToggle("Auto Attack", nil, true) 
 	UI.AddToggle("Earth Shock", nil, true)
 	UI.AddRange("Earth Shock Mana", nil, 0, 100, 1, 50)
@@ -28,5 +30,5 @@ function Shaman.Settings()
 	UI.AddRange("Flame Shock Mana", nil, 0, 100, 1, 50)
     UI.AddToggle("Stormstrike",nil,true)
     
-	DMW.Helpers.Rotation.CastingCheck = false
+	--DMW.Helpers.Rotation.CastingCheck = false
 end
