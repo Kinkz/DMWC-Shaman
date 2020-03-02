@@ -2,7 +2,7 @@ local DMW = DMW
 local Shaman = DMW.Rotations.SHAMAN
 local Rotation = DMW.Helpers.Rotation
 local Setting = DMW.Helpers.Rotation.Setting
-local Player, HP, Buff, Debuff, Spell, Target, Talent, Item, GCD, CDs, HUD, Enemy20Y, Enemy20YC, Enemy30Y, Enemy30YC
+local Player, HP, Buff, Debuff, Spell, Target, Talent, Item, GCD, CDs, HUD, Enemy20Y, Enemy20YC, Enemy30Y, Enemy30YC, hasMainHandEnchant, mainHandExpiration, mainHandCharges, mainHandEnchantID, hasOffHandEnchant
 
 local function Locals()
     Player = DMW.Player
@@ -31,12 +31,23 @@ local function FiveSecond()
     -- print(FiveSecondRuleCount)
 end
 
+
+local function checkTotemForUnits(totem, ...)
+    if Setting("Totem for Carries") then
+        for i = 1, 5 do
+            for k,v in pairs(DMW.Units) do
+                if UnitGUID("party"..i) == v.GUID and not Spell[totem]:CheckTotem(v,...) then return false end
+            end
+        end
+        return true
+    end
+    if Spell[totem]:CheckTotem(Player,...) then return true end
+end
+
 local function DEF()
     ------------------
     --- Defensives ---
     ------------------
-   
-
     -- In Combat healing
     if Setting("Combat Healing") and HP < Setting("Combat Percent HP") and Player.Combat and not Player.Moving and not Player.Casting then
             if Spell.LesserHealingWave:Known() then if not Spell.LesserHealingWave:LastCast(1) and Spell.LesserHealingWave:Cast(Player) then return end 
@@ -53,16 +64,12 @@ function Shaman.Rotation()
    Locals()
     
     -- Auto Target Quest Units
-    if Setting("Auto Target Quest Units") then if Player:AutoTargetQuest(20, true) then return end end
+    if Setting("Auto Target Quest Units") then if Player:AutoTargetQuest(30, true) then return end end
     -- Auto Target
     if Player.Combat and Setting("Auto Target") then if Player:AutoTarget(20, true) then return end end
 
     -- Rockbiter
-    --mainHandExpiration
-    if Setting("Rockbiter Weapon") then 
-        if not hasMainHandEnchant and Spell.RockbiterWeapon:Cast(Player) then return end 
-        if mainHandExpiration < 30000 and Spell.RockbiterWeapon:Cast(Player) then return end 
-    end
+    if Setting("Rockbiter Weapon") then if not hasMainHandEnchant and Spell.RockbiterWeapon:Cast(Player) then return end end
     
     -- Lightning Shield
     if Setting("Lightning Shield") and Spell.LightningShield:Known() then 
@@ -76,14 +83,14 @@ function Shaman.Rotation()
     -- Enhance DPS Rotation ----------------------------
     ----------------------------------------------------
        -- Stormstrike
-       if Setting("Stormstrike") and Target then if Spell.Stormstrike:Cast(Target) then return true end end
+       if Setting("Stormstrike") and Target and Target.ValidEnemy then if Spell.Stormstrike:Cast(Target) then return true end end
 
        -- EarthShock
-       if Setting("Earth Shock") and Target and Target.Distance <= 20 and Player.PowerPct > Setting("Earth Shock Mana") and Target.TTD > 1 
+       if Setting("Earth Shock") and Target and Target.ValidEnemy and Target.Distance <= 20 and Player.PowerPct > Setting("Earth Shock Mana") and Target.TTD > 1 
        then if Spell.EarthShock:Cast(Target) then return true end end
-
+       
        --Flame Shock
-       if Setting("Flame Shock") and Target and Target.Distance <= 20 and Player.PowerPct > Setting("Flame Shock Mana") and Target.TTD > 8  
+       if Setting("Flame Shock") and Target and Target.ValidEnemy and Target.Distance <= 20 and Player.PowerPct > Setting("Flame Shock Mana") and Target.TTD > 8  
        and not Debuff.FlameShock:Exist(Target) and Target.CreatureType ~= "Totem" and Target.CreatureType ~= "Elemental" 
        then if Spell.FlameShock:Cast(Target) then return true end end
 
@@ -91,12 +98,14 @@ function Shaman.Rotation()
        if Setting("Auto Attack") then if Target and Target.ValidEnemy and Target.Distance < 5 then StartAttack() end end
 
        --Lightning Bolt (opener)
-       if Setting("Lightning Bolt") and not Player.Combat and Target and Target.Facing and Target.Distance >= 20 and not Player.Moving and not Spell.LightningBolt:LastCast() then 
+       if Setting("Lightning Bolt") and not Player.Combat and Target and Target.ValidEnemy and Target.Facing and Target.Distance >= 20 
+       and not Player.Moving and not Spell.LightningBolt:LastCast() then 
           if Spell.LightningBolt:Cast(Target, 1) then return true end
        end 
 
        --Lightning Bolt In Combat (Leveling)
-       if Setting("Lightning Bolt In Combat") and Target and Target.Facing and not Player.Moving and Player.PowerPct > Setting("Lightning Bolt Mana Percent") and Target.TTD > 3 then 
+       if Setting("Lightning Bolt In Combat") and Target and Target.ValidEnemy and Target.Facing 
+       and not Player.Moving and Player.PowerPct > Setting("Lightning Bolt Mana Percent") and Target.TTD > 3 then 
           if Spell.LightningBolt:Cast(Target, 1) then return true end
        end    
 end
