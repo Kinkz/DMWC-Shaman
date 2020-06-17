@@ -12,7 +12,7 @@ function Shaman.Settings()
 	    UI.AddRange("OOC Healing Percent Mana", nil, 0, 100, 1, 50)
 
     UI.AddHeader("Totem Management") 
-       UI.AddToggle("Strength of Earth Totem", false)
+         UI.AddToggle("Strength of Earth Totem", nil, false)
 
     UI.AddHeader("Utility")
        UI.AddToggle("Auto Target", "Auto target units when in combat and target dead/missing", false)
